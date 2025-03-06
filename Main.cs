@@ -39,6 +39,8 @@ namespace M60CamoPicker
 
             SkinnedMeshRenderer smr_turret = v_go.transform.Find(turret_path).GetComponent<SkinnedMeshRenderer>();
             SkinnedMeshRenderer smr_gun = v_go.transform.Find(gun_path).GetComponent<SkinnedMeshRenderer>();
+            SkinnedMeshRenderer smr_rgear = v_go.transform.Find("M60_meshes/running_gear").GetComponent<SkinnedMeshRenderer>();
+
             MeshRenderer mr_hull = v_go.transform.Find(hull_path).GetComponent<MeshRenderer>();
 
 
@@ -46,12 +48,14 @@ namespace M60CamoPicker
             {
                 smr_turret.material.SetTexture("_CamoLayer", camo_textures[camo]);
                 smr_gun.material.SetTexture("_CamoLayer", camo_textures[camo]);
+                smr_rgear.material.SetTexture("_CamoLayer", camo_textures[camo]);
                 mr_hull.material.SetTexture("_CamoLayer", camo_textures[camo]);
             }
             else {
                 smr_turret.material.SetFloat("_CamoAmount", 0f);
                 smr_gun.material.SetFloat("_CamoAmount", 0f);
                 mr_hull.material.SetFloat("_CamoAmount", 0f);
+                smr_rgear.material.SetFloat("_CamoAmount", 0f);
             }
         }  
 
