@@ -3,87 +3,131 @@ using System.Linq;
 using GHPC.State;
 using GHPC.Vehicle;
 using MelonLoader;
-using NoCamoM60;
-using PactIncreasedLethality;
+using M60CamoPicker;
 using Thermals;
 using UnityEngine;
+using System.Collections.Generic;
 
-[assembly: MelonInfo(typeof(NoCamoM60Mod), "No Camo M60s", "1.0.0", "ATLAS")]
+[assembly: MelonInfo(typeof(M60CamoPickerMod), "M60 Camo Picker", "1.0.0", "ATLAS")]
 [assembly: MelonGame("Radian Simulations LLC", "GHPC")]
 
-namespace NoCamoM60
+namespace M60CamoPicker
 {
-    public class NoCamoM60Mod : MelonMod
+    public class M60CamoPickerMod : MelonMod
     {
-        public static Vehicle[] vics;
-        static Material no_camo_mat;
+        static Dictionary<string, Texture> camo_textures = new Dictionary<string, Texture>();
+        static bool done = false;
 
-        public IEnumerator GetVics(GameState _)
-        {
-            vics = GameObject.FindObjectsByType<Vehicle>(FindObjectsSortMode.None);
+        static MelonPreferences_Entry<string> camo_m60a3_tts;
+        static MelonPreferences_Entry<string> camo_m60a3;
+        static MelonPreferences_Entry<string> camo_m60a1_late;
+        static MelonPreferences_Entry<string> camo_m60a1_early;
+        static MelonPreferences_Entry<string> camo_m60a1_aos;
+        static MelonPreferences_Entry<string> camo_m60a1;
 
-            yield break;
-        }
+        static GameObject m60a3_tts;
+        static GameObject m60a3;
+        static GameObject m60a1_late;
+        static GameObject m60a1_early;
+        static GameObject m60a1_aos;
+        static GameObject m60a1;
+  
+        private static void OverrideCamo(GameObject v_go, string camo, string turret_path, string hull_path, string gun_path) {
+            turret_path = "M60_meshes/" + turret_path;
+            hull_path = "M60_meshes/" + hull_path;
+            gun_path = "M60_meshes/" + gun_path;
 
-        public static IEnumerator Convert(GameState _)
-        {
-            foreach (Vehicle vic in vics)
+            SkinnedMeshRenderer smr_turret = v_go.transform.Find(turret_path).GetComponent<SkinnedMeshRenderer>();
+            SkinnedMeshRenderer smr_gun = v_go.transform.Find(gun_path).GetComponent<SkinnedMeshRenderer>();
+            MeshRenderer mr_hull = v_go.transform.Find(hull_path).GetComponent<MeshRenderer>();
+
+
+            if (camo.ToUpper() != "NONE")
             {
-                GameObject vic_go = vic.gameObject;
-
-                if (vic == null) continue;
-                if (vic.GetComponent<AlreadyConverted>() != null) continue;
-                if (!vic.FriendlyName.Contains("M60A")) continue;
-
-                vic_go.AddComponent<AlreadyConverted>();
-
-                MeshRenderer hull_mesh = vic.transform.Find("M60_mesh/M60_hull").GetComponent<MeshRenderer>();
-                hull_mesh.materials[0].SetFloat("_CamoAmount", 0f);
-
-                /*
-                Material[] new_materials = hull_mesh.materials;
-
-                if (no_camo_mat == null)
-                {
-                    Material mat = new_materials[0];
-                    no_camo_mat = new Material(Shader.Find("GHPC/VehicleShader"));
-
-                    no_camo_mat.SetTexture("_Albedo", mat.GetTexture("_Albedo"));
-                    no_camo_mat.SetTexture("_Smoothness", mat.GetTexture("_Smoothness"));
-                    no_camo_mat.SetTexture("_Normal", mat.GetTexture("_Normal"));
-                    no_camo_mat.SetTexture("_Occlusion", mat.GetTexture("_Occlusion"));
-                    no_camo_mat.SetTexture("_PaintMask", mat.GetTexture("_PaintMask"));
-                    no_camo_mat.SetTexture("_scorchnormal", mat.GetTexture("_scorchnormal"));
-                }
-
-                new_materials[0] = no_camo_mat;
-                hull_mesh.materials = new_materials;
-                */
-
-                SkinnedMeshRenderer turret_mesh = vic.transform.Find("M60_mesh/M60 1").GetComponent<SkinnedMeshRenderer>();
-                //turret_mesh.materials = new_materials;
-                turret_mesh.materials[0].SetFloat("_CamoAmount", 0f);
-
-
-                if (vic.FriendlyName == "M60A3 TTS")
-                {
-                    SkinnedMeshRenderer gun_mesh = vic.transform.Find("M60A3_mesh/m60a3_parts").GetComponent<SkinnedMeshRenderer>();
-                    //gun_mesh.materials = new_materials;
-                    gun_mesh.materials[0].SetFloat("_CamoAmount", 0f);
-                }
-
-                vic.transform.Find("M60_mesh").gameObject.GetComponent<HeatSource>().FetchSwapableMats();
+                smr_turret.material.SetTexture("_CamoLayer", camo_textures[camo]);
+                smr_gun.material.SetTexture("_CamoLayer", camo_textures[camo]);
+                mr_hull.material.SetTexture("_CamoLayer", camo_textures[camo]);
             }
+            else {
+                smr_turret.material.SetFloat("_CamoAmount", 0f);
+                smr_turret.material.SetFloat("_CamoAmount", 0f);
+                mr_hull.material.SetFloat("_CamoAmount", 0f);
+            }
+        }  
 
-            yield break;
+
+        public override void OnInitializeMelon()
+        {
+            MelonPreferences_Category cfg = MelonPreferences.CreateCategory("M60CamoPicker");
+
+            camo_m60a3_tts = cfg.CreateEntry<string>("M60A3 TTS", "NONE");
+            camo_m60a3_tts.Description = "NONE, MERDC, DUALTEX, MASSTER";
+            camo_m60a3 = cfg.CreateEntry<string>("M60A3", "MERDC");
+            camo_m60a1_late = cfg.CreateEntry<string>("M60A1 RISE (P) Late", "MERDC");
+            camo_m60a1_early = cfg.CreateEntry<string>("M60A1 RISE (P) Early", "DUALTEX");
+            camo_m60a1_aos = cfg.CreateEntry<string>("M60A1 AOS", "MASSTER");
+            camo_m60a1 = cfg.CreateEntry<string>("M60A1", "MASSTER");
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
-            if (Util.menu_screens.Contains(sceneName)) return;
+            if (done) return;
+            if (sceneName == "LOADER_INITIAL") return;
 
-            StateController.RunOrDefer(GameState.GameReady, new GameStateEventHandler(GetVics), GameStatePriority.Medium);
-            StateController.RunOrDefer(GameState.GameReady, new GameStateEventHandler(Convert), GameStatePriority.Medium);
+            Vehicle[] vics = Resources.FindObjectsOfTypeAll<Vehicle>();
+
+            int c = 0; 
+
+            foreach (Vehicle v in vics) {
+                if (v.gameObject.name == "M60A1 AOS") {
+                    camo_textures["MASSTER"] = v.transform.Find("M60_meshes/turret_mid").GetComponent<SkinnedMeshRenderer>().material.GetTexture("_CamoLayer");
+                    m60a1_aos = v.gameObject;
+                    c++;
+                }
+
+                if (v.gameObject.name == "M60A1 RISE Passive Early")
+                {
+                    camo_textures["DUALTEX"] = v.transform.Find("M60_meshes/turret_mid").GetComponent<SkinnedMeshRenderer>().material.GetTexture("_CamoLayer");
+                    m60a1_early = v.gameObject;
+                    c++;
+                }
+
+                if (v.gameObject.name == "M60A3 TTS")
+                {
+                    camo_textures["MERDC"] = v.transform.Find("M60_meshes/turret_late").GetComponent<SkinnedMeshRenderer>().material.GetTexture("_CamoLayer");
+                    m60a3_tts = v.gameObject;
+                    c++;
+                }
+
+                if (v.gameObject.name == "M60A1 RISE Passive Late")
+                {
+                    m60a1_late = v.gameObject;
+                    c++;
+                }
+
+                if (v.gameObject.name == "M60A3")
+                {
+                    m60a3 = v.gameObject;
+                    c++;
+                }
+
+                if (v.gameObject.name == "M60A1")
+                {
+                    m60a1 = v.gameObject;
+                    c++;
+                }
+
+                if (c == 6) { break; }
+            }
+
+            OverrideCamo(m60a1, camo_m60a1.Value, "turret_early", "hull_mid", "gun_early");
+            OverrideCamo(m60a1_aos, camo_m60a1_aos.Value, "turret_mid", "hull_mid", "gun_early");
+            OverrideCamo(m60a1_early, camo_m60a1_early.Value, "turret_mid", "hull_late", "gun_early");
+            OverrideCamo(m60a1_late, camo_m60a1_late.Value, "turret_late", "hull_late", "gun_mid");
+            OverrideCamo(m60a3, camo_m60a3.Value, "turret_late", "hull_late", "gun_mid");
+            OverrideCamo(m60a3_tts, camo_m60a3_tts.Value, "turret_late", "hull_late", "gun_mid");
+
+            done = true;
         }
     }
 }

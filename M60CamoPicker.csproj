@@ -7,8 +7,8 @@
     <ProjectGuid>{34E056D0-0621-4788-AFC3-A85BDAB3FABD}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NoCamoM60</RootNamespace>
-    <AssemblyName>NoCamoM60</AssemblyName>
+    <RootNamespace>M60CamoPicker</RootNamespace>
+    <AssemblyName>M60CamoPicker</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>

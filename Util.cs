@@ -5,7 +5,7 @@ using GHPC.Equipment.Optics;
 using GHPC.Weapons;
 using UnityEngine;
 
-namespace PactIncreasedLethality
+namespace M60CamoPicker
 {
     public class AlreadyConverted : MonoBehaviour
     {
