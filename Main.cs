@@ -50,7 +50,7 @@ namespace M60CamoPicker
             }
             else {
                 smr_turret.material.SetFloat("_CamoAmount", 0f);
-                smr_turret.material.SetFloat("_CamoAmount", 0f);
+                smr_gun.material.SetFloat("_CamoAmount", 0f);
                 mr_hull.material.SetFloat("_CamoAmount", 0f);
             }
         }  
